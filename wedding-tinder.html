@@ -183,14 +183,19 @@
     // ---- PhotoUploader component ----
     function PhotoUploader({ photos, setPhotos, max = 6 }) {
       const handleUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file || photos.length >= max) return;
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          const compressed = await compressPhoto(ev.target.result);
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const slots = max - photos.length;
+        const toProcess = files.slice(0, slots);
+        for (const file of toProcess) {
+          const dataUrl = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve(ev.target.result);
+            reader.readAsDataURL(file);
+          });
+          const compressed = await compressPhoto(dataUrl);
           setPhotos(prev => [...prev, compressed]);
-        };
-        reader.readAsDataURL(file);
+        }
         e.target.value = '';
       };
       return (
@@ -203,7 +208,7 @@
               </>) : (
                 <label style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
                   <span className="add-icon">+</span>
-                  <input type="file" accept="image/*" style={{display:'none'}} onChange={handleUpload} />
+                  <input type="file" accept="image/*" multiple style={{display:'none'}} onChange={handleUpload} />
                 </label>
               )}
             </div>
@@ -277,7 +282,9 @@
 
       const handleCreateProfile = async (data) => {
         const { profile: p } = await api.post('/api/profiles', { ...data, wedding_code: weddingCode });
-        setProfile(p); setScreen('waitingApproval');
+        setProfile(p);
+        if (p.status === 'approved') setScreen('swipe');
+        else setScreen('waitingApproval');
       };
 
       const handleUpdateProfile = async (data) => {
@@ -308,13 +315,14 @@
         setScreen('myWeddings');
       };
 
-      const canGoBack = ['createWedding','share','enterCode','createProfile','welcomeWedding'].includes(screen);
+      const canGoBack = ['createWedding','share','enterCode','createProfile','welcomeWedding','swipe','matches','profile'].includes(screen);
       const goBack = () => {
         if (screen === 'createWedding') setScreen('auth');
         else if (screen === 'share') goToDashboard();
         else if (screen === 'enterCode') { guestWeddings.length > 0 ? setScreen('myWeddings') : handleLogout(); }
         else if (screen === 'welcomeWedding') setScreen('enterCode');
         else if (screen === 'createProfile') setScreen('welcomeWedding');
+        else if (['swipe','matches','profile'].includes(screen) && user?.role === 'guest') goToMyWeddings();
       };
 
       const bannerInfo = wedding && profile && ['swipe','matches','profile'].includes(screen) ? wedding : null;
@@ -417,15 +425,15 @@
         <div className="screen welcome-screen" style={{paddingTop:40,justifyContent:'flex-start'}}>
           <div className="welcome-icon" style={{fontSize:'3.5rem',marginBottom:16}}>{'\uD83D\uDC92'}</div>
           <h2 className="welcome-title" style={{fontSize:'1.8rem',marginBottom:8}}>Wedding Match</h2>
-          <p className="welcome-text" style={{marginBottom:24}}>{mode === 'login' ? 'Inicia sesion para continuar' : 'Crea tu cuenta'}</p>
+          <p className="welcome-text" style={{marginBottom:24}}>{mode === 'login' ? 'Inicia sesión para continuar' : 'Crea tu cuenta'}</p>
           <div style={{width:'100%',maxWidth:320}}>
             <div className="form-group">
               <label className="form-label">Usuario</label>
               <input type="text" className="form-input" placeholder="Tu nombre de usuario" value={username} onChange={e=>setUsername(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Contrasena</label>
-              <input type="password" className="form-input" placeholder={mode==='register'?'Minimo 4 caracteres':'Tu contrasena'} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(mode==='login'||role))handleSubmit()}} />
+              <label className="form-label">Contraseña</label>
+              <input type="password" className="form-input" placeholder={mode==='register'?'Minimo 4 caracteres':'Tu contraseña'} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(mode==='login'||role))handleSubmit()}} />
             </div>
             {mode === 'register' && (
               <div className="form-group">
@@ -437,10 +445,10 @@
               </div>
             )}
             {error && <p className="error-msg">{error}</p>}
-            <div style={{marginTop:16}}><button className="btn btn-primary" onClick={handleSubmit} disabled={loading} style={{maxWidth:'100%'}}>{loading ? '...' : (mode==='login'?'Iniciar sesion':'Crear cuenta')}</button></div>
+            <div style={{marginTop:16}}><button className="btn btn-primary" onClick={handleSubmit} disabled={loading} style={{maxWidth:'100%'}}>{loading ? '...' : (mode==='login'?'Iniciar sesión':'Crear cuenta')}</button></div>
             <div style={{textAlign:'center',marginTop:20}}>
               {mode==='login' ? <span style={{color:'var(--text-light)',fontSize:'0.9rem'}}>No tienes cuenta? <button className="link-btn" onClick={()=>{setMode('register');setError('')}}>Registrate</button></span>
-              : <span style={{color:'var(--text-light)',fontSize:'0.9rem'}}>Ya tienes cuenta? <button className="link-btn" onClick={()=>{setMode('login');setError('')}}>Inicia sesion</button></span>}
+              : <span style={{color:'var(--text-light)',fontSize:'0.9rem'}}>Ya tienes cuenta? <button className="link-btn" onClick={()=>{setMode('login');setError('')}}>Inicia sesión</button></span>}
             </div>
           </div>
         </div>
@@ -515,7 +523,7 @@
             ))}
           </div>}
           <button className="btn btn-primary" onClick={onJoinNew} style={{marginBottom:12}}>+ Unirme a {weddings.length > 0 ? 'otra ' : 'una '}boda</button>
-          <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+          <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesión</button>
         </div></div>
       );
     }
@@ -611,12 +619,14 @@
       const [editNames, setEditNames] = useState(wedding.names || '');
       const [editDate, setEditDate] = useState(wedding.wedding_date || '');
       const [editVenue, setEditVenue] = useState(wedding.venue || '');
+      const [requireApproval, setRequireApproval] = useState(wedding.require_approval !== undefined ? !!wedding.require_approval : true);
       const url = window.location.origin + window.location.pathname + '?w=' + wedding.code;
 
       useEffect(() => {
         setProfiles(wedding.profiles || []); setPending(wedding.pendingProfiles || []);
         setMatches(wedding.matches || []); setStats(wedding.stats || {});
         setEditNames(wedding.names || ''); setEditDate(wedding.wedding_date || ''); setEditVenue(wedding.venue || '');
+        setRequireApproval(wedding.require_approval !== undefined ? !!wedding.require_approval : true);
       }, [wedding]);
 
       const refresh = async () => { setRefreshing(true); await onRefresh(); setRefreshing(false); showToast('Datos actualizados'); };
@@ -631,7 +641,7 @@
       const deleteProfile = async (id) => { await api.del('/api/profiles/'+id+'/from-wedding'); setProfiles(p=>p.filter(x=>x.id!==id)); setMatches(m=>m.filter(x=>x.p1?.id!==id&&x.p2?.id!==id)); setExpandedProfile(null); setConfirmDelete(null); showToast('Invitado eliminado'); };
 
       const saveInfo = async () => {
-        await api.put('/api/weddings/mine', { names: editNames, wedding_date: editDate, venue: editVenue });
+        await api.put('/api/weddings/mine', { names: editNames, wedding_date: editDate, venue: editVenue, require_approval: requireApproval });
         setEditingInfo(false); showToast('Datos guardados'); refresh();
       };
 
@@ -658,13 +668,20 @@
                 </div>
                 <p style={{fontWeight:600,marginBottom:8,fontSize:'0.9rem'}}>Enlace para invitados:</p>
                 <div className="share-box" style={{marginBottom:12}}><div className="share-url">{url}</div><button className="share-btn" onClick={share}>{'\uD83D\uDCE4'}</button></div>
-                <p style={{fontSize:'0.8rem',color:'var(--text-light)',marginBottom:12}}>Codigo: <strong>{wedding.code}</strong></p>
+                <p style={{fontSize:'0.8rem',color:'var(--text-light)',marginBottom:8}}>Codigo: <strong>{wedding.code}</strong></p>
+                <p style={{fontSize:'0.8rem',color:requireApproval?'var(--success)':'var(--text-light)',marginBottom:12}}>{requireApproval ? '\u2705 Aprobación de invitados activada' : '\u26A0\uFE0F Invitados entran sin aprobación'}</p>
                 <button className="btn btn-secondary btn-small" onClick={()=>setEditingInfo(true)} style={{maxWidth:'100%'}}>Editar datos de la boda</button>
               </> : <>
                 <h3 className="card-title">Editar boda</h3>
                 <div className="form-group"><label className="form-label">Nombres</label><input type="text" className="form-input" value={editNames} onChange={e=>setEditNames(e.target.value)} /></div>
                 <div className="form-group"><label className="form-label">Fecha</label><input type="date" className="form-input" value={editDate} onChange={e=>setEditDate(e.target.value)} /></div>
                 <div className="form-group"><label className="form-label">Lugar</label><input type="text" className="form-input" value={editVenue} onChange={e=>setEditVenue(e.target.value)} /></div>
+                <div className="form-group" style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={()=>setRequireApproval(!requireApproval)}>
+                  <div style={{width:48,height:28,borderRadius:14,background:requireApproval?'var(--primary)':'var(--accent)',transition:'background 0.3s',position:'relative',flexShrink:0}}>
+                    <div style={{width:22,height:22,borderRadius:'50%',background:'white',position:'absolute',top:3,left:requireApproval?23:3,transition:'left 0.3s',boxShadow:'0 2px 4px rgba(0,0,0,0.2)'}} />
+                  </div>
+                  <label className="form-label" style={{margin:0,cursor:'pointer'}}>Aprobar invitados antes de que puedan hacer match</label>
+                </div>
                 <div style={{display:'flex',gap:8}}><button className="btn btn-primary btn-small" style={{flex:1}} onClick={saveInfo}>Guardar</button><button className="btn btn-outline btn-small" style={{flex:1}} onClick={()=>setEditingInfo(false)}>Cancelar</button></div>
               </>}
             </div>
@@ -703,7 +720,7 @@
 
             <div style={{display:'flex',gap:12,flexDirection:'column',alignItems:'center'}}>
               <button className="btn btn-secondary btn-small" onClick={refresh} disabled={refreshing}>{refreshing ? '...' : '\uD83D\uDD04 Actualizar datos'}</button>
-              <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+              <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesión</button>
             </div>
           </>}
 
@@ -797,6 +814,21 @@
       const handleTouchMove = (e) => { currentX.current = e.touches[0].clientX; const diff = currentX.current - startX.current; if (cardRef.current) cardRef.current.style.transform = `translateX(${diff}px) rotate(${diff*0.05}deg)`; };
       const handleTouchEnd = () => { const diff = currentX.current - startX.current; if (cardRef.current) cardRef.current.style.transform = ''; if (Math.abs(diff)>100) handleSwipe(diff>0?'right':'left'); startX.current=0; currentX.current=0; };
 
+      const imgStartX = useRef(0);
+      const handleImgTouchStart = (e) => { imgStartX.current = e.touches[0].clientX; if (currentProfile.photos?.length > 1) e.stopPropagation(); };
+      const handleImgTouchMove = (e) => { if (currentProfile.photos?.length > 1) e.stopPropagation(); };
+      const handleImgTouchEnd = (e) => {
+        const diff = e.changedTouches[0].clientX - imgStartX.current;
+        if (currentProfile.photos?.length > 1) {
+          e.stopPropagation();
+          if (Math.abs(diff) > 30) {
+            if (diff < 0 && photoIndex < currentProfile.photos.length - 1) setPhotoIndex(p => p + 1);
+            else if (diff > 0 && photoIndex > 0) setPhotoIndex(p => p - 1);
+          }
+        }
+        imgStartX.current = 0;
+      };
+
       if (!loaded) return <div className="screen screen-with-nav"><div className="empty-state"><p>Cargando...</p></div></div>;
       if (!currentProfile) return (
         <div className="screen screen-with-nav"><div className="empty-state">
@@ -810,7 +842,7 @@
         <div className="screen screen-with-nav">
           <div className="swipe-container">
             <div ref={cardRef} className={`profile-card ${swipeClass}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-              <div className="profile-image-container" onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();const x=e.clientX-rect.left;x<rect.width/2?(photoIndex>0&&setPhotoIndex(p=>p-1)):(currentProfile.photos?.length>photoIndex+1&&setPhotoIndex(p=>p+1))}}>
+              <div className="profile-image-container" onTouchStart={handleImgTouchStart} onTouchMove={handleImgTouchMove} onTouchEnd={handleImgTouchEnd} onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();const x=e.clientX-rect.left;x<rect.width/2?(photoIndex>0&&setPhotoIndex(p=>p-1)):(currentProfile.photos?.length>photoIndex+1&&setPhotoIndex(p=>p+1))}}>
                 {currentProfile.photos?.length > 0 ? <img src={currentProfile.photos[photoIndex]} alt="" className="profile-image" /> : <div className="profile-image-placeholder">:)</div>}
                 {currentProfile.photos?.length > 1 && <div className="profile-gallery-dots">{currentProfile.photos.map((_,i)=><div key={i} className={`gallery-dot ${i===photoIndex?'active':''}`} />)}</div>}
               </div>
@@ -833,9 +865,34 @@
     function MatchesScreen({ weddingCode, profile, onOpenChat }) {
       const [matches, setMatches] = useState([]);
       const [loaded, setLoaded] = useState(false);
+      const [viewProfile, setViewProfile] = useState(null);
+      const [viewPhotoIndex, setViewPhotoIndex] = useState(0);
       useEffect(() => { api.get('/api/matches/' + weddingCode).then(({matches:m})=>{setMatches(m);setLoaded(true)}).catch(()=>setLoaded(true)); }, [weddingCode]);
 
+      const interestText = {guys:'Le gustan los chicos',girls:'Le gustan las chicas',both:'Le gustan ambos'};
+      const genderLabel = {male:'Chico',female:'Chica'};
+
       if (!loaded) return <div className="screen screen-with-nav"><div className="empty-state"><p>Cargando...</p></div></div>;
+
+      if (viewProfile) return (
+        <div className="screen screen-with-nav">
+          <div className="card" style={{textAlign:'center'}}>
+            <div style={{position:'relative',marginBottom:16}}>
+              {viewProfile.photos?.length > 0 ? <>
+                <img src={viewProfile.photos[viewPhotoIndex]} alt="" style={{width:'100%',maxHeight:350,objectFit:'cover',borderRadius:16}} />
+                {viewProfile.photos.length > 1 && <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:8}}>
+                  {viewProfile.photos.map((_,i) => <div key={i} onClick={()=>setViewPhotoIndex(i)} style={{width:8,height:8,borderRadius:'50%',background:i===viewPhotoIndex?'var(--primary)':'var(--accent)',cursor:'pointer'}} />)}
+                </div>}
+              </> : <div style={{width:'100%',height:200,background:'var(--secondary)',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'4rem'}}>:)</div>}
+            </div>
+            <h2 style={{fontFamily:"'Playfair Display', serif",fontSize:'1.8rem'}}>{viewProfile.name}, {viewProfile.age}</h2>
+            <p style={{color:'var(--text-light)',marginTop:4,marginBottom:20}}>{genderLabel[viewProfile.gender]} · {interestText[viewProfile.orientation]}</p>
+            <button className="btn btn-primary" onClick={()=>{ setViewProfile(null); onOpenChat(viewProfile); }} style={{marginBottom:12}}>Chatear {'\uD83D\uDCAC'}</button>
+            <button className="btn btn-outline btn-small" onClick={()=>{setViewProfile(null);setViewPhotoIndex(0)}}>{'\u2190'} Volver a matches</button>
+          </div>
+        </div>
+      );
+
       if (matches.length === 0) return (
         <div className="screen screen-with-nav">
           <h2 className="card-title" style={{marginBottom:20}}>{'\u2728'} Tus Matches</h2>
@@ -847,10 +904,12 @@
         <div className="screen screen-with-nav">
           <h2 className="card-title" style={{marginBottom:20}}>{'\u2728'} Tus Matches ({matches.length})</h2>
           <div className="matches-list">{matches.map(m => (
-            <div key={m.id} className="match-item" style={{cursor:'pointer'}} onClick={()=>onOpenChat(m)}>
-              {m.photos?.[0]?<img src={m.photos[0]} alt="" className="match-avatar" />:<div className="match-avatar-placeholder">:)</div>}
-              <div className="match-info"><h3>{m.name}, {m.age}</h3><p>{m.lastMessage ? m.lastMessage : 'Toca para chatear'}</p></div>
-              <span style={{fontSize:'1.2rem',color:'var(--primary)'}}>{'\uD83D\uDCAC'}</span>
+            <div key={m.id} className="match-item" style={{cursor:'pointer'}}>
+              <div onClick={()=>{setViewProfile(m);setViewPhotoIndex(0)}} style={{display:'flex',alignItems:'center',gap:16,flex:1}}>
+                {m.photos?.[0]?<img src={m.photos[0]} alt="" className="match-avatar" />:<div className="match-avatar-placeholder">:)</div>}
+                <div className="match-info"><h3>{m.name}, {m.age}</h3><p>{m.lastMessage ? m.lastMessage : 'Toca para ver perfil'}</p></div>
+              </div>
+              <span style={{fontSize:'1.2rem',color:'var(--primary)',cursor:'pointer',padding:8}} onClick={()=>onOpenChat(m)}>{'\uD83D\uDCAC'}</span>
             </div>
           ))}</div>
         </div>
@@ -940,7 +999,7 @@
             </div>
             <button className="btn btn-secondary" onClick={()=>setEditing(true)} style={{marginBottom:12}}>{'\u270F\uFE0F'} Editar perfil</button>
             {onBackToWeddings && <button className="btn btn-outline" onClick={onBackToWeddings} style={{marginBottom:12}}>{'\uD83D\uDC92'} Mis bodas</button>}
-            <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+            <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesión</button>
           </>}
         </div></div>
       );

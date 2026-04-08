@@ -50,7 +50,7 @@ app.post('/api/register', (req, res) => {
   const { username, password, role } = req.body;
   if (!username?.trim() || !password || !role) return res.status(400).json({ error: 'Faltan campos' });
   if (!['couple', 'guest'].includes(role)) return res.status(400).json({ error: 'Rol invalido' });
-  if (password.length < 4) return res.status(400).json({ error: 'Contrasena muy corta (min. 4)' });
+  if (password.length < 4) return res.status(400).json({ error: 'Contraseña muy corta (min. 4)' });
   if (get('SELECT id FROM users WHERE username = ?', [username.trim()]))
     return res.status(409).json({ error: 'Ese usuario ya existe' });
 
@@ -66,7 +66,7 @@ app.post('/api/login', (req, res) => {
   if (!username || !password) return res.status(400).json({ error: 'Faltan campos' });
   const user = get('SELECT * FROM users WHERE username = ?', [username.trim()]);
   if (!user || !bcrypt.compareSync(password, user.password_hash))
-    return res.status(401).json({ error: 'Usuario o contrasena incorrectos' });
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
   const token = genToken();
   run('INSERT INTO sessions (token, user_id) VALUES (?,?)', [token, user.id]);
   saveDb();
@@ -128,9 +128,9 @@ app.put('/api/weddings/mine', auth, (req, res) => {
   if (req.user.role !== 'couple') return res.status(403).json({ error: 'Solo novios' });
   const wedding = getCoupleWedding(req.user.id);
   if (!wedding) return res.status(404).json({ error: 'Boda no encontrada' });
-  const { names, wedding_date, venue } = req.body;
-  run('UPDATE weddings SET names=?, wedding_date=?, venue=? WHERE id=?',
-    [names || wedding.names, wedding_date ?? wedding.wedding_date, venue ?? wedding.venue, wedding.id]);
+  const { names, wedding_date, venue, require_approval } = req.body;
+  run('UPDATE weddings SET names=?, wedding_date=?, venue=?, require_approval=? WHERE id=?',
+    [names || wedding.names, wedding_date ?? wedding.wedding_date, venue ?? wedding.venue, require_approval !== undefined ? (require_approval ? 1 : 0) : wedding.require_approval, wedding.id]);
   saveDb();
   res.json({ ok: true });
 });
@@ -161,8 +161,9 @@ app.post('/api/profiles', auth, (req, res) => {
     return res.status(409).json({ error: 'Ya tienes perfil en esta boda' });
 
   const id = genId();
+  const initialStatus = wedding.require_approval ? 'pending' : 'approved';
   run('INSERT INTO profiles (id,user_id,wedding_id,name,age,gender,orientation,status) VALUES (?,?,?,?,?,?,?,?)',
-    [id, req.user.id, wedding.id, name, age, gender, orientation, 'pending']);
+    [id, req.user.id, wedding.id, name, age, gender, orientation, initialStatus]);
   if (photos?.length) photos.forEach((p, i) => run('INSERT INTO photos (profile_id,photo_data,sort_order) VALUES (?,?,?)', [id, p, i]));
   saveDb();
   const created = profileWithPhotos(get('SELECT * FROM profiles WHERE id = ?', [id]));
@@ -383,6 +384,7 @@ async function start() {
   try { run('ALTER TABLE weddings ADD COLUMN wedding_date TEXT DEFAULT ""'); } catch {}
   try { run('ALTER TABLE weddings ADD COLUMN venue TEXT DEFAULT ""'); } catch {}
   try { run('ALTER TABLE profiles ADD COLUMN status TEXT DEFAULT "approved"'); } catch {}
+  try { run('ALTER TABLE weddings ADD COLUMN require_approval INTEGER DEFAULT 1'); } catch {}
 
   saveDb();
   const PORT = process.env.PORT || 3000;
