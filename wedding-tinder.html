@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wedding Match</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    :root{--primary:#E8A598;--primary-dark:#D4847A;--secondary:#F5E6E0;--accent:#C9B8A8;--text:#4A3F3A;--text-light:#7A6F68;--white:#FFFBF9;--success:#8BC6A5;--danger:#E88B8B;--gold:#D4A574;--shadow:rgba(74,63,58,0.12);--gradient:linear-gradient(135deg,#F5E6E0 0%,#E8D4CF 50%,#E8A598 100%)}
+    body{font-family:'Quicksand',sans-serif;background:var(--gradient);min-height:100vh;color:var(--text);overflow-x:hidden}
+    #root{min-height:100vh}
+    .app-container{max-width:430px;margin:0 auto;min-height:100vh;background:var(--white);position:relative;box-shadow:0 0 60px var(--shadow)}
+    .header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);padding:16px 20px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:center;position:relative}
+    .header-content{text-align:center}
+    .header h1{font-family:'Playfair Display',serif;color:var(--white);font-size:1.6rem;font-weight:600;letter-spacing:1px}
+    .header .subtitle{color:rgba(255,255,255,0.85);font-size:0.8rem;margin-top:2px}
+    .back-btn{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;color:white;width:40px;height:40px;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease}
+    .back-btn:hover,.back-btn:active{background:rgba(255,255,255,0.3)}
+    .screen{padding:24px 20px;min-height:calc(100vh - 80px);animation:fadeIn 0.3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .welcome-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:60px}
+    .welcome-icon{font-size:5rem;margin-bottom:24px;animation:float 3s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    .welcome-title{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--text);margin-bottom:12px}
+    .welcome-text{color:var(--text-light);font-size:1rem;line-height:1.6;margin-bottom:40px;max-width:300px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;border:none;border-radius:50px;font-family:'Quicksand',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.3s ease;text-decoration:none;width:100%;max-width:300px}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+    .btn-primary{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:var(--white);box-shadow:0 8px 24px rgba(232,165,152,0.4)}
+    .btn-primary:hover:not(:disabled),.btn-primary:active:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(232,165,152,0.5)}
+    .btn-secondary{background:var(--secondary);color:var(--text)}
+    .btn-secondary:hover,.btn-secondary:active{background:var(--accent)}
+    .btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+    .btn-small{padding:10px 20px;font-size:0.9rem}
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;font-weight:600;margin-bottom:8px;color:var(--text)}
+    .form-input{width:100%;padding:14px 18px;border:2px solid var(--secondary);border-radius:16px;font-family:'Quicksand',sans-serif;font-size:1rem;color:var(--text);background:var(--white);transition:all 0.3s ease}
+    .form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(232,165,152,0.15)}
+    .form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234A3F3A' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:48px}
+    .card{background:var(--white);border-radius:24px;padding:24px;box-shadow:0 4px 20px var(--shadow);margin-bottom:20px}
+    .card-title{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:16px;color:var(--text)}
+    .swipe-container{position:relative;height:480px;margin-bottom:20px}
+    .profile-card{position:absolute;width:100%;height:100%;border-radius:24px;overflow:hidden;background:var(--white);box-shadow:0 10px 40px var(--shadow);cursor:grab;transition:transform 0.1s ease}
+    .profile-card:active{cursor:grabbing}
+    .profile-card.swiping-left{animation:swipeLeft 0.4s ease forwards}
+    .profile-card.swiping-right{animation:swipeRight 0.4s ease forwards}
+    @keyframes swipeLeft{to{transform:translateX(-150%) rotate(-20deg);opacity:0}}
+    @keyframes swipeRight{to{transform:translateX(150%) rotate(20deg);opacity:0}}
+    .profile-image-container{position:relative;height:340px;overflow:hidden}
+    .profile-image{width:100%;height:100%;object-fit:cover}
+    .profile-image-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--secondary) 0%,var(--accent) 100%);font-size:6rem}
+    .profile-gallery-dots{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:center;gap:6px;padding:0 20px}
+    .gallery-dot{height:4px;flex:1;max-width:60px;background:rgba(255,255,255,0.5);border-radius:2px;transition:background 0.3s ease}
+    .gallery-dot.active{background:var(--white)}
+    .profile-info{padding:20px}
+    .profile-name-age{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--text)}
+    .profile-name-age span{font-family:'Quicksand',sans-serif;font-weight:400;color:var(--text-light)}
+    .profile-orientation{color:var(--text-light);font-size:0.9rem;margin-top:4px}
+    .swipe-buttons{display:flex;justify-content:center;gap:24px}
+    .swipe-btn{width:64px;height:64px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;font-size:1.8rem;cursor:pointer;transition:all 0.3s ease;box-shadow:0 4px 16px var(--shadow)}
+    .swipe-btn-no{background:var(--white);color:var(--danger);border:3px solid var(--danger)}
+    .swipe-btn-yes{background:var(--white);color:var(--success);border:3px solid var(--success)}
+    .swipe-btn-undo{background:var(--white);color:var(--gold);border:3px solid var(--gold);width:48px;height:48px;font-size:1.3rem}
+    .swipe-btn:hover,.swipe-btn:active{transform:scale(1.1)}
+    .swipe-btn-no:hover{background:var(--danger);color:var(--white)}
+    .swipe-btn-yes:hover{background:var(--success);color:var(--white)}
+    .swipe-btn-undo:hover{background:var(--gold);color:var(--white)}
+    .photo-upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+    .photo-slot{aspect-ratio:1;border-radius:16px;border:2px dashed var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:all 0.3s ease;background:var(--secondary)}
+    .photo-slot:hover{border-color:var(--primary);background:rgba(232,165,152,0.1)}
+    .photo-slot.filled{border:none}
+    .photo-slot img{width:100%;height:100%;object-fit:cover}
+    .photo-slot .add-icon{font-size:2rem;color:var(--accent)}
+    .photo-slot .remove-btn{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.6);color:white;border:none;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--white);display:flex;justify-content:space-around;padding:12px 0 20px;box-shadow:0 -4px 20px var(--shadow);border-top:1px solid var(--secondary);z-index:100}
+    .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 20px;border:none;background:none;cursor:pointer;color:var(--text-light);font-size:0.75rem;font-family:'Quicksand',sans-serif;font-weight:500;transition:color 0.3s ease}
+    .nav-item.active{color:var(--primary)}
+    .nav-icon{font-size:1.5rem}
+    .matches-list{display:flex;flex-direction:column;gap:12px}
+    .match-item{display:flex;align-items:center;gap:16px;padding:16px;background:var(--white);border-radius:16px;box-shadow:0 2px 12px var(--shadow)}
+    .match-avatar{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--primary)}
+    .match-avatar-placeholder{width:60px;height:60px;border-radius:50%;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-size:1.8rem;border:3px solid var(--primary)}
+    .match-info{flex:1}
+    .match-info h3{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:4px}
+    .match-info p{color:var(--text-light);font-size:0.85rem}
+    .match-badge{margin-left:auto;background:var(--success);color:white;padding:6px 12px;border-radius:20px;font-size:0.75rem;font-weight:600}
+    .share-box{background:var(--secondary);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    .share-url{flex:1;font-size:0.85rem;color:var(--text);word-break:break-all;background:var(--white);padding:12px;border-radius:12px}
+    .share-btn{padding:12px 16px;border:none;background:var(--primary);color:white;border-radius:12px;cursor:pointer;font-size:1.2rem;transition:all 0.3s ease}
+    .share-btn:hover{background:var(--primary-dark)}
+    .empty-state{text-align:center;padding:60px 20px}
+    .empty-icon{font-size:4rem;margin-bottom:16px}
+    .empty-title{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:8px}
+    .empty-text{color:var(--text-light)}
+    .match-popup{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.3s ease}
+    .match-popup-content{text-align:center;color:white;padding:40px}
+    .match-popup-title{font-family:'Playfair Display',serif;font-size:2.5rem;margin-bottom:24px;background:linear-gradient(135deg,var(--primary) 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .match-popup-avatars{display:flex;justify-content:center;align-items:center;margin-bottom:24px}
+    .match-popup-avatar{width:100px;height:100px;border-radius:50%;border:4px solid var(--primary);object-fit:cover;background:var(--secondary);display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden}
+    .match-popup-heart{font-size:2rem;margin:0 -10px;animation:pulse 1s ease infinite}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+    .match-popup-text{font-size:1.1rem;margin-bottom:32px;opacity:0.9}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--secondary)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+    .screen-with-nav{padding-bottom:100px}
+    .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:12px 24px;border-radius:50px;font-size:0.9rem;z-index:1000;animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s}
+    @keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+    @keyframes toastOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,20px)}}
+    .wedding-banner{background:linear-gradient(135deg,var(--gold) 0%,var(--primary) 100%);color:white;padding:12px 20px;text-align:center;font-weight:500}
+    .wedding-names{font-family:'Playfair Display',serif;font-size:1.1rem}
+    .wedding-banner-detail{font-size:0.8rem;opacity:0.9;margin-top:2px}
+    .error-msg{color:var(--danger);font-size:0.85rem;margin-top:8px;text-align:center}
+    .link-btn{background:none;border:none;color:var(--primary);font-family:'Quicksand',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;text-decoration:underline}
+    .role-selector{display:flex;gap:12px;margin-bottom:20px}
+    .role-option{flex:1;padding:20px 12px;border:2px solid var(--secondary);border-radius:16px;text-align:center;cursor:pointer;transition:all 0.3s ease;background:var(--white)}
+    .role-option:hover{border-color:var(--primary)}
+    .role-option.selected{border-color:var(--primary);background:rgba(232,165,152,0.1)}
+    .role-option .role-icon{font-size:2rem;margin-bottom:8px}
+    .role-option .role-label{font-weight:600;font-size:0.9rem}
+    .chat-container{display:flex;flex-direction:column;height:calc(100vh - 80px)}
+    .chat-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--secondary)}
+    .chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+    .chat-bubble{max-width:75%;padding:12px 16px;border-radius:20px;font-size:0.9rem;line-height:1.4;word-wrap:break-word}
+    .chat-bubble.mine{align-self:flex-end;background:var(--primary);color:white;border-bottom-right-radius:4px}
+    .chat-bubble.theirs{align-self:flex-start;background:var(--secondary);color:var(--text);border-bottom-left-radius:4px}
+    .chat-input-area{padding:12px 16px;border-top:1px solid var(--secondary);display:flex;gap:8px;background:var(--white)}
+    .chat-input{flex:1;padding:12px 16px;border:2px solid var(--secondary);border-radius:24px;font-family:'Quicksand',sans-serif;font-size:0.9rem;outline:none}
+    .chat-input:focus{border-color:var(--primary)}
+    .chat-send{width:44px;height:44px;border-radius:50%;border:none;background:var(--primary);color:white;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .chat-send:disabled{opacity:0.4}
+    .tab-bar{display:flex;gap:0;margin-bottom:16px;border-radius:12px;overflow:hidden;border:2px solid var(--secondary)}
+    .tab-btn{flex:1;padding:10px;border:none;background:var(--white);font-family:'Quicksand',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;color:var(--text-light);transition:all 0.2s}
+    .tab-btn.active{background:var(--primary);color:white}
+    .pending-badge{background:var(--danger);color:white;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;margin-left:6px;vertical-align:middle}
+    .stat-bar{height:8px;border-radius:4px;background:var(--secondary);overflow:hidden;margin-top:4px}
+    .stat-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--primary),var(--gold));transition:width 0.5s ease}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ---- API ----
+    const api = {
+      token: localStorage.getItem('authToken'),
+      setToken(t) { this.token = t; t ? localStorage.setItem('authToken', t) : localStorage.removeItem('authToken'); },
+      async request(method, url, body) {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (this.token) opts.headers['Authorization'] = 'Bearer ' + this.token;
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(url, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error');
+        return data;
+      },
+      get(u) { return this.request('GET', u); },
+      post(u, b) { return this.request('POST', u, b); },
+      put(u, b) { return this.request('PUT', u, b); },
+      del(u) { return this.request('DELETE', u); },
+    };
+
+    // ---- Photo compression ----
+    function compressPhoto(dataUrl, maxW = 800, quality = 0.7) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > maxW) { h = (h * maxW) / w; w = maxW; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = dataUrl;
+      });
+    }
+
+    // ---- PhotoUploader component ----
+    function PhotoUploader({ photos, setPhotos, max = 6 }) {
+      const handleUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file || photos.length >= max) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const compressed = await compressPhoto(ev.target.result);
+          setPhotos(prev => [...prev, compressed]);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      };
+      return (
+        <div className="photo-upload-grid">
+          {Array.from({length: max}).map((_, i) => (
+            <div key={i} className={`photo-slot ${photos[i] ? 'filled' : ''}`}>
+              {photos[i] ? (<>
+                <img src={photos[i]} alt="" />
+                <button className="remove-btn" onClick={() => setPhotos(photos.filter((_,j) => j !== i))}>x</button>
+              </>) : (
+                <label style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
+                  <span className="add-icon">+</span>
+                  <input type="file" accept="image/*" style={{display:'none'}} onChange={handleUpload} />
+                </label>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ===================== APP =====================
+    function App() {
+      const [screen, setScreen] = useState('loading');
+      const [user, setUser] = useState(null);
+      const [wedding, setWedding] = useState(null);
+      const [profile, setProfile] = useState(null);
+      const [weddingCode, setWeddingCode] = useState(localStorage.getItem('weddingCode') || '');
+      const [toast, setToast] = useState(null);
+      const [matchPopup, setMatchPopup] = useState(null);
+      const [guestWeddings, setGuestWeddings] = useState([]);
+      const [chatTarget, setChatTarget] = useState(null);
+
+      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+      useEffect(() => {
+        if (!api.token) { setScreen('auth'); return; }
+        api.get('/api/me').then(({ user: u }) => { setUser(u); routeAfterLogin(u); })
+          .catch(() => { api.setToken(null); setScreen('auth'); });
+      }, []);
+
+      const routeAfterLogin = async (u) => {
+        if (u.role === 'couple') {
+          try { const { wedding: w } = await api.get('/api/weddings/mine');
+            if (w) { setWedding(w); setScreen('couplesDashboard'); } else setScreen('createWedding');
+          } catch { setScreen('createWedding'); }
+        } else {
+          const params = new URLSearchParams(window.location.search);
+          const urlCode = params.get('w');
+          if (urlCode) {
+            try {
+              const { wedding: w, profile: p } = await api.get('/api/weddings/join/' + urlCode);
+              setWedding(w); setWeddingCode(urlCode); localStorage.setItem('weddingCode', urlCode);
+              if (p) {
+                if (p.status === 'pending') { setProfile(p); setScreen('waitingApproval'); }
+                else { setProfile(p); setScreen('swipe'); }
+              } else { setScreen('welcomeWedding'); }
+              return;
+            } catch {}
+          }
+          try {
+            const { weddings: gw } = await api.get('/api/weddings/guest-mine');
+            if (gw?.length > 0) { setGuestWeddings(gw); setScreen('myWeddings'); }
+            else setScreen('enterCode');
+          } catch { setScreen('enterCode'); }
+        }
+      };
+
+      const handleLogin = (u, token) => { api.setToken(token); setUser(u); routeAfterLogin(u); };
+      const handleLogout = async () => {
+        try { await api.post('/api/logout'); } catch {}
+        api.setToken(null); localStorage.removeItem('weddingCode');
+        setUser(null); setWedding(null); setProfile(null); setScreen('auth');
+      };
+
+      const handleJoinWedding = async (code) => {
+        const { wedding: w, profile: p } = await api.get('/api/weddings/join/' + code);
+        setWedding(w); setWeddingCode(code); localStorage.setItem('weddingCode', code);
+        if (p) {
+          if (p.status === 'pending') { setProfile(p); setScreen('waitingApproval'); }
+          else { setProfile(p); setScreen('swipe'); }
+        } else { setScreen('welcomeWedding'); }
+      };
+
+      const handleCreateProfile = async (data) => {
+        const { profile: p } = await api.post('/api/profiles', { ...data, wedding_code: weddingCode });
+        setProfile(p); setScreen('waitingApproval');
+      };
+
+      const handleUpdateProfile = async (data) => {
+        const { profile: p } = await api.put('/api/profiles/' + profile.id, data);
+        setProfile(p); showToast('Perfil actualizado');
+      };
+
+      const handleLike = async (targetId) => {
+        const { isMatch, matchedProfile } = await api.post('/api/like', { wedding_code: weddingCode, target_profile_id: targetId });
+        if (isMatch && matchedProfile) setMatchPopup(matchedProfile);
+      };
+
+      const goToDashboard = async () => {
+        try { const { wedding: w } = await api.get('/api/weddings/mine'); if (w) setWedding(w); } catch {}
+        setScreen('couplesDashboard');
+      };
+
+      const handleSelectGuestWedding = (gw) => {
+        setWedding(gw.wedding); setProfile(gw.profile); setWeddingCode(gw.wedding.code);
+        localStorage.setItem('weddingCode', gw.wedding.code);
+        if (gw.profile?.status === 'pending') setScreen('waitingApproval');
+        else setScreen('swipe');
+      };
+
+      const goToMyWeddings = async () => {
+        try { const { weddings: gw } = await api.get('/api/weddings/guest-mine'); setGuestWeddings(gw || []); } catch {}
+        setWedding(null); setProfile(null); setWeddingCode(''); localStorage.removeItem('weddingCode');
+        setScreen('myWeddings');
+      };
+
+      const canGoBack = ['createWedding','share','enterCode','createProfile','welcomeWedding'].includes(screen);
+      const goBack = () => {
+        if (screen === 'createWedding') setScreen('auth');
+        else if (screen === 'share') goToDashboard();
+        else if (screen === 'enterCode') { guestWeddings.length > 0 ? setScreen('myWeddings') : handleLogout(); }
+        else if (screen === 'welcomeWedding') setScreen('enterCode');
+        else if (screen === 'createProfile') setScreen('welcomeWedding');
+      };
+
+      const bannerInfo = wedding && profile && ['swipe','matches','profile'].includes(screen) ? wedding : null;
+
+      return (
+        <div className="app-container">
+          {bannerInfo && (
+            <div className="wedding-banner">
+              <span className="wedding-names">Boda de {bannerInfo.names}</span>
+              {(bannerInfo.wedding_date || bannerInfo.venue) && (
+                <div className="wedding-banner-detail">
+                  {bannerInfo.wedding_date && bannerInfo.wedding_date}{bannerInfo.wedding_date && bannerInfo.venue && ' \u00B7 '}{bannerInfo.venue && bannerInfo.venue}
+                </div>
+              )}
+            </div>
+          )}
+
+          {screen !== 'chat' && (
+            <div className="header">
+              {canGoBack && <button className="back-btn" onClick={goBack}>{'\u2190'}</button>}
+              <div className="header-content">
+                <h1>Wedding Match</h1>
+                <p className="subtitle">Encuentra tu pareja en la boda</p>
+              </div>
+            </div>
+          )}
+
+          {screen === 'loading' && <div className="screen welcome-screen"><p className="welcome-text">Cargando...</p></div>}
+          {screen === 'auth' && <AuthScreen onLogin={handleLogin} />}
+          {screen === 'createWedding' && <CreateWeddingScreen onSubmit={async (d) => { const { wedding: w } = await api.post('/api/weddings', d); setWedding(w); setScreen('share'); }} />}
+          {screen === 'share' && wedding && <ShareScreen wedding={wedding} onContinue={goToDashboard} showToast={showToast} />}
+          {screen === 'couplesDashboard' && wedding && <CouplesDashboard wedding={wedding} onLogout={handleLogout} onRefresh={goToDashboard} showToast={showToast} />}
+          {screen === 'myWeddings' && <MyWeddingsScreen guestWeddings={guestWeddings} onSelect={handleSelectGuestWedding} onJoinNew={() => setScreen('enterCode')} onLogout={handleLogout} user={user} />}
+          {screen === 'enterCode' && <EnterCodeScreen onSubmit={handleJoinWedding} showToast={showToast} user={user} />}
+          {screen === 'welcomeWedding' && wedding && <WelcomeWeddingScreen wedding={wedding} onContinue={() => setScreen('createProfile')} />}
+          {screen === 'createProfile' && wedding && <CreateProfileScreen wedding={wedding} onSubmit={handleCreateProfile} />}
+          {screen === 'waitingApproval' && <WaitingApprovalScreen onRefresh={async () => {
+            try {
+              const { wedding: w, profile: p } = await api.get('/api/weddings/join/' + weddingCode);
+              if (p?.status === 'approved') { setProfile(p); setWedding(w); setScreen('swipe'); showToast('Perfil aprobado!'); }
+              else showToast('Aun pendiente...');
+            } catch { showToast('Error al comprobar'); }
+          }} onBack={goToMyWeddings} />}
+          {screen === 'swipe' && wedding && profile && <SwipeScreen weddingCode={weddingCode} profile={profile} onLike={handleLike} />}
+          {screen === 'matches' && wedding && <MatchesScreen weddingCode={weddingCode} profile={profile} onOpenChat={(p) => { setChatTarget(p); setScreen('chat'); }} />}
+          {screen === 'profile' && profile && <ProfileScreen profile={profile} onUpdate={handleUpdateProfile} onLogout={handleLogout} onBackToWeddings={goToMyWeddings} />}
+          {screen === 'chat' && chatTarget && <ChatScreen weddingCode={weddingCode} otherProfile={chatTarget} onBack={() => setScreen('matches')} />}
+
+          {profile && ['swipe','matches','profile'].includes(screen) && (
+            <nav className="bottom-nav">
+              <button className={`nav-item ${screen==='swipe'?'active':''}`} onClick={() => setScreen('swipe')}><span className="nav-icon">{'\uD83D\uDC95'}</span>Descubrir</button>
+              <button className={`nav-item ${screen==='matches'?'active':''}`} onClick={() => setScreen('matches')}><span className="nav-icon">{'\u2728'}</span>Matches</button>
+              <button className={`nav-item ${screen==='profile'?'active':''}`} onClick={() => setScreen('profile')}><span className="nav-icon">{'\uD83D\uDC64'}</span>Perfil</button>
+            </nav>
+          )}
+
+          {toast && <div className="toast">{toast}</div>}
+
+          {matchPopup && (
+            <div className="match-popup" onClick={() => setMatchPopup(null)}>
+              <div className="match-popup-content">
+                <h2 className="match-popup-title">Es un Match!</h2>
+                <div className="match-popup-avatars">
+                  <div className="match-popup-avatar">{profile?.photos?.[0] ? <img src={profile.photos[0]} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : ':)'}</div>
+                  <span className="match-popup-heart">{'\uD83D\uDC95'}</span>
+                  <div className="match-popup-avatar">{matchPopup.photos?.[0] ? <img src={matchPopup.photos[0]} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}} /> : ':)'}</div>
+                </div>
+                <p className="match-popup-text">Tu y {matchPopup.name} os gustais mutuamente</p>
+                <button className="btn btn-primary" onClick={() => setMatchPopup(null)}>Genial!</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ===================== AUTH =====================
+    function AuthScreen({ onLogin }) {
+      const [mode, setMode] = useState('login');
+      const [username, setUsername] = useState('');
+      const [password, setPassword] = useState('');
+      const [role, setRole] = useState('');
+      const [error, setError] = useState('');
+      const [loading, setLoading] = useState(false);
+
+      const handleSubmit = async () => {
+        setError('');
+        if (!username.trim() || !password) { setError('Rellena todos los campos'); return; }
+        if (mode === 'register' && !role) { setError('Selecciona tu rol'); return; }
+        setLoading(true);
+        try {
+          const body = mode === 'login' ? { username: username.trim(), password } : { username: username.trim(), password, role };
+          const { token, user } = await api.post(mode === 'login' ? '/api/login' : '/api/register', body);
+          onLogin(user, token);
+        } catch (e) { setError(e.message); }
+        setLoading(false);
+      };
+
+      return (
+        <div className="screen welcome-screen" style={{paddingTop:40,justifyContent:'flex-start'}}>
+          <div className="welcome-icon" style={{fontSize:'3.5rem',marginBottom:16}}>{'\uD83D\uDC92'}</div>
+          <h2 className="welcome-title" style={{fontSize:'1.8rem',marginBottom:8}}>Wedding Match</h2>
+          <p className="welcome-text" style={{marginBottom:24}}>{mode === 'login' ? 'Inicia sesion para continuar' : 'Crea tu cuenta'}</p>
+          <div style={{width:'100%',maxWidth:320}}>
+            <div className="form-group">
+              <label className="form-label">Usuario</label>
+              <input type="text" className="form-input" placeholder="Tu nombre de usuario" value={username} onChange={e=>setUsername(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Contrasena</label>
+              <input type="password" className="form-input" placeholder={mode==='register'?'Minimo 4 caracteres':'Tu contrasena'} value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(mode==='login'||role))handleSubmit()}} />
+            </div>
+            {mode === 'register' && (
+              <div className="form-group">
+                <label className="form-label">Soy...</label>
+                <div className="role-selector">
+                  <div className={`role-option ${role==='couple'?'selected':''}`} onClick={()=>setRole('couple')}><div className="role-icon">{'\uD83D\uDC8D'}</div><div className="role-label">Novio/a</div></div>
+                  <div className={`role-option ${role==='guest'?'selected':''}`} onClick={()=>setRole('guest')}><div className="role-icon">{'\uD83C\uDF89'}</div><div className="role-label">Invitado/a</div></div>
+                </div>
+              </div>
+            )}
+            {error && <p className="error-msg">{error}</p>}
+            <div style={{marginTop:16}}><button className="btn btn-primary" onClick={handleSubmit} disabled={loading} style={{maxWidth:'100%'}}>{loading ? '...' : (mode==='login'?'Iniciar sesion':'Crear cuenta')}</button></div>
+            <div style={{textAlign:'center',marginTop:20}}>
+              {mode==='login' ? <span style={{color:'var(--text-light)',fontSize:'0.9rem'}}>No tienes cuenta? <button className="link-btn" onClick={()=>{setMode('register');setError('')}}>Registrate</button></span>
+              : <span style={{color:'var(--text-light)',fontSize:'0.9rem'}}>Ya tienes cuenta? <button className="link-btn" onClick={()=>{setMode('login');setError('')}}>Inicia sesion</button></span>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ===================== CREATE WEDDING =====================
+    function CreateWeddingScreen({ onSubmit }) {
+      const [names, setNames] = useState('');
+      const [date, setDate] = useState('');
+      const [venue, setVenue] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+
+      return (
+        <div className="screen">
+          <div className="card">
+            <h3 className="card-title">{'\uD83D\uDC8D'} Crea tu boda</h3>
+            <div className="form-group"><label className="form-label">Nombres de los novios</label>
+              <input type="text" className="form-input" placeholder="Ej: Maria & Juan" value={names} onChange={e=>setNames(e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">Fecha (opcional)</label>
+              <input type="date" className="form-input" value={date} onChange={e=>setDate(e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">Lugar (opcional)</label>
+              <input type="text" className="form-input" placeholder="Ej: Finca Los Olivos" value={venue} onChange={e=>setVenue(e.target.value)} /></div>
+            {error && <p className="error-msg">{error}</p>}
+            <button className="btn btn-primary" disabled={!names.trim()||loading} onClick={async ()=>{
+              setLoading(true); try { await onSubmit({ names: names.trim(), wedding_date: date, venue }); } catch(e){ setError(e.message); } setLoading(false);
+            }}>{loading ? '...' : 'Crear boda'}</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ===================== SHARE =====================
+    function ShareScreen({ wedding, onContinue, showToast }) {
+      const url = window.location.origin + window.location.pathname + '?w=' + wedding.code;
+      const share = async () => {
+        if (navigator.share) { try { await navigator.share({ title: 'Boda de ' + wedding.names, text: 'Unete a Wedding Match!', url }); } catch {} }
+        else { try { await navigator.clipboard.writeText(url); showToast('URL copiada!'); } catch { showToast('Error al copiar'); } }
+      };
+      return (
+        <div className="screen"><div className="card">
+          <h3 className="card-title">{'\uD83C\uDF89'} Boda creada!</h3>
+          <p style={{color:'var(--text-light)',marginBottom:20}}>Comparte este enlace con tus invitados:</p>
+          <div className="share-box"><div className="share-url">{url}</div><button className="share-btn" onClick={share}>{'\uD83D\uDCE4'}</button></div>
+          <p style={{fontSize:'0.85rem',color:'var(--text-light)',marginBottom:20}}>Codigo: <strong>{wedding.code}</strong></p>
+          <button className="btn btn-primary" onClick={onContinue}>Ver mi boda {'\u2192'}</button>
+        </div></div>
+      );
+    }
+
+    // ===================== MY WEDDINGS (guest) =====================
+    function MyWeddingsScreen({ guestWeddings: initial, onSelect, onJoinNew, onLogout, user }) {
+      const [weddings, setWeddings] = useState(initial);
+      const [loading, setLoading] = useState(false);
+      useEffect(() => { setLoading(true); api.get('/api/weddings/guest-mine').then(({weddings:f})=>setWeddings(f||[])).catch(()=>{}).finally(()=>setLoading(false)); }, []);
+      if (loading && weddings.length === 0) return <div className="screen"><div className="empty-state"><p>Cargando...</p></div></div>;
+      return (
+        <div className="screen"><div className="card">
+          <h3 className="card-title">{'\uD83C\uDF89'} Mis Bodas</h3>
+          <p style={{color:'var(--text-light)',marginBottom:20,fontSize:'0.9rem'}}>Hola <strong>{user?.username}</strong>!{weddings.length > 0 ? ' Toca una boda para entrar.' : ' Aun no te has unido a ninguna boda.'}</p>
+          {weddings.length > 0 && <div className="matches-list" style={{marginBottom:20}}>
+            {weddings.map(gw => (
+              <div key={gw.wedding.id} className="match-item" style={{cursor:'pointer'}} onClick={()=>onSelect(gw)}>
+                {gw.profile?.photos?.[0] ? <img src={gw.profile.photos[0]} alt="" className="match-avatar" /> : <div className="match-avatar-placeholder">{'\uD83D\uDC92'}</div>}
+                <div className="match-info">
+                  <h3>Boda de {gw.wedding.names}</h3>
+                  <p>{gw.profile?.name}, {gw.profile?.age} {gw.profile?.status === 'pending' ? ' \u00B7 Pendiente' : ''}</p>
+                </div>
+                <span style={{fontSize:'1.4rem',color:'var(--primary)'}}>{'\u2192'}</span>
+              </div>
+            ))}
+          </div>}
+          <button className="btn btn-primary" onClick={onJoinNew} style={{marginBottom:12}}>+ Unirme a {weddings.length > 0 ? 'otra ' : 'una '}boda</button>
+          <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+        </div></div>
+      );
+    }
+
+    // ===================== ENTER CODE =====================
+    function EnterCodeScreen({ onSubmit, showToast, user }) {
+      const [code, setCode] = useState('');
+      const [loading, setLoading] = useState(false);
+      const join = async (c) => { setLoading(true); try { await onSubmit(c); } catch(e){ showToast(e.message||'Codigo no encontrado'); } setLoading(false); };
+      return (
+        <div className="screen"><div className="card">
+          <h3 className="card-title">{'\uD83C\uDF89'} Unete a una boda</h3>
+          <p style={{color:'var(--text-light)',marginBottom:16,fontSize:'0.9rem'}}>Hola <strong>{user?.username}</strong>! Introduce el codigo de la boda.</p>
+          <div className="form-group"><label className="form-label">Codigo de la boda</label>
+            <input type="text" className="form-input" placeholder="Introduce el codigo" value={code} onChange={e=>setCode(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&code.trim())join(code.trim())}} /></div>
+          <button className="btn btn-primary" onClick={()=>join(code.trim())} disabled={!code.trim()||loading}>{loading?'...':'Unirse'}</button>
+        </div></div>
+      );
+    }
+
+    // ===================== WELCOME WEDDING (new guest) =====================
+    function WelcomeWeddingScreen({ wedding, onContinue }) {
+      const dateStr = wedding.wedding_date ? new Date(wedding.wedding_date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : null;
+      return (
+        <div className="screen welcome-screen" style={{paddingTop:40}}>
+          <div className="welcome-icon">{'\uD83D\uDC92'}</div>
+          <h2 className="welcome-title" style={{fontSize:'1.8rem'}}>Boda de</h2>
+          <h2 className="welcome-title" style={{fontSize:'2rem',marginBottom:8,background:'linear-gradient(135deg, var(--primary), var(--gold))',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>{wedding.names}</h2>
+          {dateStr && <p style={{color:'var(--text-light)',fontSize:'1rem',marginBottom:4}}>{'\uD83D\uDCC5'} {dateStr}</p>}
+          {wedding.venue && <p style={{color:'var(--text-light)',fontSize:'1rem',marginBottom:24}}>{'\uD83D\uDCCD'} {wedding.venue}</p>}
+          {!dateStr && !wedding.venue && <div style={{height:24}} />}
+          <p className="welcome-text">Crea tu perfil para empezar a hacer match con otros invitados!</p>
+          <button className="btn btn-primary" onClick={onContinue}>Crear mi perfil {'\uD83D\uDC95'}</button>
+        </div>
+      );
+    }
+
+    // ===================== CREATE PROFILE =====================
+    function CreateProfileScreen({ wedding, onSubmit }) {
+      const [name, setName] = useState('');
+      const [age, setAge] = useState('');
+      const [gender, setGender] = useState('');
+      const [orientation, setOrientation] = useState('');
+      const [photos, setPhotos] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const isValid = name && age && gender && orientation && photos.length > 0;
+
+      return (
+        <div className="screen"><div className="card">
+          <h3 className="card-title">{'\uD83D\uDC64'} Crea tu perfil</h3>
+          <p style={{color:'var(--text-light)',marginBottom:20,fontSize:'0.9rem'}}>Boda de {wedding.names}</p>
+          <div className="form-group"><label className="form-label">Nombre</label><input type="text" className="form-input" placeholder="Tu nombre" value={name} onChange={e=>setName(e.target.value)} /></div>
+          <div className="form-group"><label className="form-label">Edad</label><input type="number" className="form-input" placeholder="Tu edad" value={age} onChange={e=>setAge(e.target.value)} min="18" max="99" /></div>
+          <div className="form-group"><label className="form-label">Soy</label>
+            <select className="form-input form-select" value={gender} onChange={e=>setGender(e.target.value)}><option value="">Selecciona...</option><option value="male">Chico</option><option value="female">Chica</option></select></div>
+          <div className="form-group"><label className="form-label">Me gustan</label>
+            <select className="form-input form-select" value={orientation} onChange={e=>setOrientation(e.target.value)}><option value="">Selecciona...</option><option value="guys">Chicos</option><option value="girls">Chicas</option><option value="both">Ambos</option></select></div>
+          <div className="form-group"><label className="form-label">Fotos (minimo 1)</label><PhotoUploader photos={photos} setPhotos={setPhotos} /></div>
+          {error && <p className="error-msg">{error}</p>}
+          <button className="btn btn-primary" disabled={!isValid||loading} onClick={async ()=>{
+            setLoading(true); setError(''); try { await onSubmit({name,age:parseInt(age),gender,orientation,photos}); } catch(e){ setError(e.message); } setLoading(false);
+          }}>{loading?'...':'Crear perfil'}</button>
+        </div></div>
+      );
+    }
+
+    // ===================== WAITING APPROVAL =====================
+    function WaitingApprovalScreen({ onRefresh, onBack }) {
+      const [checking, setChecking] = useState(false);
+      return (
+        <div className="screen welcome-screen" style={{paddingTop:60}}>
+          <div style={{fontSize:'4rem',marginBottom:24}}>{'\u23F3'}</div>
+          <h2 className="welcome-title" style={{fontSize:'1.6rem'}}>Esperando aprobacion</h2>
+          <p className="welcome-text">Los novios deben aprobar tu perfil antes de que puedas empezar a hacer match.</p>
+          <button className="btn btn-primary" style={{marginBottom:12}} disabled={checking} onClick={async ()=>{ setChecking(true); await onRefresh(); setChecking(false); }}>{checking ? 'Comprobando...' : 'Comprobar estado'}</button>
+          <button className="btn btn-outline btn-small" onClick={onBack}>{'\u2190'} Volver a mis bodas</button>
+        </div>
+      );
+    }
+
+    // ===================== COUPLES DASHBOARD =====================
+    function CouplesDashboard({ wedding, onLogout, onRefresh, showToast }) {
+      const [tab, setTab] = useState('overview');
+      const [profiles, setProfiles] = useState(wedding.profiles || []);
+      const [pending, setPending] = useState(wedding.pendingProfiles || []);
+      const [matches, setMatches] = useState(wedding.matches || []);
+      const [stats, setStats] = useState(wedding.stats || {});
+      const [expandedProfile, setExpandedProfile] = useState(null);
+      const [confirmDelete, setConfirmDelete] = useState(null);
+      const [refreshing, setRefreshing] = useState(false);
+      const [editingInfo, setEditingInfo] = useState(false);
+      const [editNames, setEditNames] = useState(wedding.names || '');
+      const [editDate, setEditDate] = useState(wedding.wedding_date || '');
+      const [editVenue, setEditVenue] = useState(wedding.venue || '');
+      const url = window.location.origin + window.location.pathname + '?w=' + wedding.code;
+
+      useEffect(() => {
+        setProfiles(wedding.profiles || []); setPending(wedding.pendingProfiles || []);
+        setMatches(wedding.matches || []); setStats(wedding.stats || {});
+        setEditNames(wedding.names || ''); setEditDate(wedding.wedding_date || ''); setEditVenue(wedding.venue || '');
+      }, [wedding]);
+
+      const refresh = async () => { setRefreshing(true); await onRefresh(); setRefreshing(false); showToast('Datos actualizados'); };
+
+      const share = async () => {
+        if (navigator.share) { try { await navigator.share({title:'Boda de '+wedding.names,text:'Unete a Wedding Match!',url}); } catch {} }
+        else { try { await navigator.clipboard.writeText(url); showToast('URL copiada!'); } catch { showToast('Error al copiar'); } }
+      };
+
+      const approveProfile = async (id) => { await api.post('/api/profiles/'+id+'/approve'); setPending(p=>p.filter(x=>x.id!==id)); refresh(); showToast('Invitado aprobado'); };
+      const rejectProfile = async (id) => { await api.post('/api/profiles/'+id+'/reject'); setPending(p=>p.filter(x=>x.id!==id)); showToast('Solicitud rechazada'); };
+      const deleteProfile = async (id) => { await api.del('/api/profiles/'+id+'/from-wedding'); setProfiles(p=>p.filter(x=>x.id!==id)); setMatches(m=>m.filter(x=>x.p1?.id!==id&&x.p2?.id!==id)); setExpandedProfile(null); setConfirmDelete(null); showToast('Invitado eliminado'); };
+
+      const saveInfo = async () => {
+        await api.put('/api/weddings/mine', { names: editNames, wedding_date: editDate, venue: editVenue });
+        setEditingInfo(false); showToast('Datos guardados'); refresh();
+      };
+
+      const maxLikes = Math.max(1, ...(stats.likesPerProfile||[]).map(p=>p.likes_received));
+
+      return (
+        <div className="screen" style={{paddingBottom:32}}>
+          <div className="tab-bar">
+            <button className={`tab-btn ${tab==='overview'?'active':''}`} onClick={()=>setTab('overview')}>Mi Boda</button>
+            <button className={`tab-btn ${tab==='pending'?'active':''}`} onClick={()=>setTab('pending')}>Solicitudes{pending.length > 0 && <span className="pending-badge">{pending.length}</span>}</button>
+            <button className={`tab-btn ${tab==='stats'?'active':''}`} onClick={()=>setTab('stats')}>Stats</button>
+          </div>
+
+          {tab === 'overview' && <>
+            <div className="card" style={{marginBottom:16}}>
+              {!editingInfo ? <>
+                <h3 className="card-title">{'\uD83D\uDC92'} {wedding.names}</h3>
+                {(wedding.wedding_date||wedding.venue) && <p style={{color:'var(--text-light)',fontSize:'0.9rem',marginBottom:12}}>
+                  {wedding.wedding_date && '\uD83D\uDCC5 '+wedding.wedding_date}{wedding.wedding_date&&wedding.venue&&' \u00B7 '}{wedding.venue && '\uD83D\uDCCD '+wedding.venue}
+                </p>}
+                <div style={{display:'flex',gap:12,marginBottom:20}}>
+                  <div style={{flex:1,background:'var(--secondary)',borderRadius:16,padding:'16px 12px',textAlign:'center'}}><div style={{fontSize:'2rem',fontWeight:700,color:'var(--primary)'}}>{profiles.length}</div><div style={{fontSize:'0.8rem',color:'var(--text-light)'}}>Invitados</div></div>
+                  <div style={{flex:1,background:'var(--secondary)',borderRadius:16,padding:'16px 12px',textAlign:'center'}}><div style={{fontSize:'2rem',fontWeight:700,color:'var(--success)'}}>{matches.length}</div><div style={{fontSize:'0.8rem',color:'var(--text-light)'}}>Matches</div></div>
+                </div>
+                <p style={{fontWeight:600,marginBottom:8,fontSize:'0.9rem'}}>Enlace para invitados:</p>
+                <div className="share-box" style={{marginBottom:12}}><div className="share-url">{url}</div><button className="share-btn" onClick={share}>{'\uD83D\uDCE4'}</button></div>
+                <p style={{fontSize:'0.8rem',color:'var(--text-light)',marginBottom:12}}>Codigo: <strong>{wedding.code}</strong></p>
+                <button className="btn btn-secondary btn-small" onClick={()=>setEditingInfo(true)} style={{maxWidth:'100%'}}>Editar datos de la boda</button>
+              </> : <>
+                <h3 className="card-title">Editar boda</h3>
+                <div className="form-group"><label className="form-label">Nombres</label><input type="text" className="form-input" value={editNames} onChange={e=>setEditNames(e.target.value)} /></div>
+                <div className="form-group"><label className="form-label">Fecha</label><input type="date" className="form-input" value={editDate} onChange={e=>setEditDate(e.target.value)} /></div>
+                <div className="form-group"><label className="form-label">Lugar</label><input type="text" className="form-input" value={editVenue} onChange={e=>setEditVenue(e.target.value)} /></div>
+                <div style={{display:'flex',gap:8}}><button className="btn btn-primary btn-small" style={{flex:1}} onClick={saveInfo}>Guardar</button><button className="btn btn-outline btn-small" style={{flex:1}} onClick={()=>setEditingInfo(false)}>Cancelar</button></div>
+              </>}
+            </div>
+
+            {profiles.length > 0 && <div className="card" style={{marginBottom:16}}>
+              <h3 className="card-title">{'\uD83D\uDC65'} Invitados ({profiles.length})</h3>
+              <p style={{color:'var(--text-light)',fontSize:'0.8rem',marginBottom:12}}>Toca un invitado para ver detalles</p>
+              <div className="matches-list">{profiles.map(p => (
+                <div key={p.id}>
+                  <div className="match-item" style={{cursor:'pointer'}} onClick={()=>{setExpandedProfile(expandedProfile===p.id?null:p.id);setConfirmDelete(null)}}>
+                    {p.photos?.[0]?<img src={p.photos[0]} alt="" className="match-avatar" />:<div className="match-avatar-placeholder">:)</div>}
+                    <div className="match-info"><h3>{p.name}, {p.age}</h3><p>{p.gender==='male'?'Chico':'Chica'} &middot; Le gustan: {p.orientation==='guys'?'chicos':p.orientation==='girls'?'chicas':'ambos'}</p></div>
+                    <span style={{fontSize:'1.2rem',color:'var(--text-light)',transition:'transform 0.2s',transform:expandedProfile===p.id?'rotate(180deg)':'rotate(0)'}}>{'\u25BC'}</span>
+                  </div>
+                  {expandedProfile===p.id && <div style={{padding:'12px 16px',background:'var(--secondary)',borderRadius:'0 0 16px 16px',marginTop:-4,animation:'fadeIn 0.2s ease'}}>
+                    {p.photos?.length > 1 && <div style={{display:'flex',gap:8,marginBottom:12,overflowX:'auto',paddingBottom:4}}>{p.photos.map((ph,i)=><img key={i} src={ph} alt="" style={{width:80,height:80,borderRadius:12,objectFit:'cover',flexShrink:0}} />)}</div>}
+                    {confirmDelete===p.id?<div style={{display:'flex',gap:8}}>
+                      <button style={{flex:1,padding:'10px',border:'none',borderRadius:12,background:'var(--danger)',color:'white',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:'pointer'}} onClick={()=>deleteProfile(p.id)}>Si, eliminar</button>
+                      <button style={{flex:1,padding:'10px',border:'2px solid var(--accent)',borderRadius:12,background:'white',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:'pointer'}} onClick={()=>setConfirmDelete(null)}>Cancelar</button>
+                    </div>:<button style={{width:'100%',padding:'10px',border:'2px solid var(--danger)',borderRadius:12,background:'white',color:'var(--danger)',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:'pointer'}} onClick={()=>setConfirmDelete(p.id)}>Eliminar invitado</button>}
+                  </div>}
+                </div>
+              ))}</div>
+            </div>}
+
+            {matches.length > 0 && <div className="card" style={{marginBottom:16}}>
+              <h3 className="card-title">{'\uD83D\uDC95'} Matches ({matches.length})</h3>
+              <div className="matches-list">{matches.map((m,i) => (
+                <div key={i} className="match-item">
+                  {m.p1?.photos?.[0]?<img src={m.p1.photos[0]} alt="" className="match-avatar" style={{width:44,height:44}} />:<div className="match-avatar-placeholder" style={{width:44,height:44,fontSize:'1.2rem'}}>:)</div>}
+                  <div className="match-info"><h3>{m.p1?.name} & {m.p2?.name}</h3><p>Se han dado like mutuamente!</p></div>
+                  <span>{'\uD83D\uDC95'}</span>
+                </div>
+              ))}</div>
+            </div>}
+
+            <div style={{display:'flex',gap:12,flexDirection:'column',alignItems:'center'}}>
+              <button className="btn btn-secondary btn-small" onClick={refresh} disabled={refreshing}>{refreshing ? '...' : '\uD83D\uDD04 Actualizar datos'}</button>
+              <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+            </div>
+          </>}
+
+          {tab === 'pending' && <>
+            {pending.length === 0 ? <div className="card"><div className="empty-state" style={{padding:'40px 20px'}}><div className="empty-icon">{'\u2705'}</div><h3 className="empty-title">Sin solicitudes</h3><p className="empty-text">No hay perfiles pendientes de aprobacion</p></div></div>
+            : <div className="card"><h3 className="card-title">Solicitudes pendientes ({pending.length})</h3><div className="matches-list">{pending.map(p => (
+              <div key={p.id} className="match-item" style={{flexWrap:'wrap'}}>
+                {p.photos?.[0]?<img src={p.photos[0]} alt="" className="match-avatar" />:<div className="match-avatar-placeholder">:)</div>}
+                <div className="match-info"><h3>{p.name}, {p.age}</h3><p>{p.gender==='male'?'Chico':'Chica'} &middot; Le gustan: {p.orientation==='guys'?'chicos':p.orientation==='girls'?'chicas':'ambos'}</p></div>
+                <div style={{display:'flex',gap:8,width:'100%',marginTop:8}}>
+                  <button style={{flex:1,padding:'10px',border:'none',borderRadius:12,background:'var(--success)',color:'white',fontFamily:'Quicksand',fontWeight:600,cursor:'pointer'}} onClick={()=>approveProfile(p.id)}>{'\u2705'} Aprobar</button>
+                  <button style={{flex:1,padding:'10px',border:'2px solid var(--danger)',borderRadius:12,background:'white',color:'var(--danger)',fontFamily:'Quicksand',fontWeight:600,cursor:'pointer'}} onClick={()=>rejectProfile(p.id)}>{'\u274C'} Rechazar</button>
+                </div>
+              </div>
+            ))}</div></div>}
+            <div style={{marginTop:16,textAlign:'center'}}><button className="btn btn-secondary btn-small" onClick={refresh} disabled={refreshing}>{refreshing ? '...' : '\uD83D\uDD04 Actualizar'}</button></div>
+          </>}
+
+          {tab === 'stats' && <>
+            <div className="card" style={{marginBottom:16}}>
+              <h3 className="card-title">{'\uD83D\uDCCA'} Estadisticas</h3>
+              <div style={{display:'flex',gap:12,marginBottom:20}}>
+                <div style={{flex:1,background:'var(--secondary)',borderRadius:16,padding:'16px 12px',textAlign:'center'}}><div style={{fontSize:'1.8rem',fontWeight:700,color:'var(--primary)'}}>{stats.totalProfiles||0}</div><div style={{fontSize:'0.75rem',color:'var(--text-light)'}}>Invitados</div></div>
+                <div style={{flex:1,background:'var(--secondary)',borderRadius:16,padding:'16px 12px',textAlign:'center'}}><div style={{fontSize:'1.8rem',fontWeight:700,color:'var(--danger)'}}>{stats.totalLikes||0}</div><div style={{fontSize:'0.75rem',color:'var(--text-light)'}}>Likes</div></div>
+                <div style={{flex:1,background:'var(--secondary)',borderRadius:16,padding:'16px 12px',textAlign:'center'}}><div style={{fontSize:'1.8rem',fontWeight:700,color:'var(--success)'}}>{stats.totalMatches||0}</div><div style={{fontSize:'0.75rem',color:'var(--text-light)'}}>Matches</div></div>
+              </div>
+              {stats.totalProfiles > 0 && <p style={{fontSize:'0.85rem',color:'var(--text-light)',marginBottom:4}}>Tasa de match: <strong>{stats.totalProfiles > 1 ? Math.round((stats.totalMatches / (stats.totalProfiles * (stats.totalProfiles-1) / 2)) * 100) : 0}%</strong></p>}
+            </div>
+
+            {(stats.likesPerProfile||[]).length > 0 && <div className="card">
+              <h3 className="card-title">{'\uD83D\uDD25'} Ranking de popularidad</h3>
+              {stats.likesPerProfile.map((p,i) => (
+                <div key={p.id} style={{marginBottom:16}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                    <span style={{fontWeight:700,color:i===0?'var(--gold)':i===1?'var(--accent)':'var(--text-light)',fontSize:'0.9rem'}}>{i<3?['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'][i]:(i+1)+'.'}</span>
+                    <span style={{fontWeight:600,fontSize:'0.9rem'}}>{p.name}</span>
+                    <span style={{marginLeft:'auto',fontWeight:700,color:'var(--primary)',fontSize:'0.85rem'}}>{p.likes_received} likes</span>
+                  </div>
+                  <div className="stat-bar"><div className="stat-bar-fill" style={{width:(p.likes_received/maxLikes*100)+'%'}} /></div>
+                </div>
+              ))}
+            </div>}
+
+            <div style={{marginTop:16,textAlign:'center'}}><button className="btn btn-secondary btn-small" onClick={refresh} disabled={refreshing}>{refreshing ? '...' : '\uD83D\uDD04 Actualizar'}</button></div>
+          </>}
+        </div>
+      );
+    }
+
+    // ===================== SWIPE =====================
+    function SwipeScreen({ weddingCode, profile, onLike }) {
+      const [profiles, setProfiles] = useState([]);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [photoIndex, setPhotoIndex] = useState(0);
+      const [swipeClass, setSwipeClass] = useState('');
+      const [loaded, setLoaded] = useState(false);
+      const [lastSwipe, setLastSwipe] = useState(null);
+      const [undoing, setUndoing] = useState(false);
+      const cardRef = useRef(null);
+      const startX = useRef(0);
+      const currentX = useRef(0);
+
+      useEffect(() => { api.get('/api/profiles/compatible/' + weddingCode).then(({profiles:p})=>{setProfiles(p);setLoaded(true)}).catch(()=>setLoaded(true)); }, [weddingCode]);
+
+      const currentProfile = profiles[currentIndex];
+
+      const handleSwipe = (direction) => {
+        if (!currentProfile) return;
+        setSwipeClass(direction === 'right' ? 'swiping-right' : 'swiping-left');
+        const swiped = currentProfile;
+        setTimeout(() => {
+          if (direction === 'right') onLike(swiped.id);
+          else api.post('/api/pass', { wedding_code: weddingCode, target_profile_id: swiped.id }).catch(()=>{});
+          setLastSwipe({ profile: swiped, direction });
+          setSwipeClass(''); setPhotoIndex(0); setCurrentIndex(prev => prev + 1);
+        }, 400);
+      };
+
+      const handleUndo = async () => {
+        if (!lastSwipe || undoing) return;
+        setUndoing(true);
+        try {
+          await api.post('/api/undo-swipe', { wedding_code: weddingCode, target_profile_id: lastSwipe.profile.id, direction: lastSwipe.direction });
+          setCurrentIndex(prev => prev - 1);
+          setLastSwipe(null);
+        } catch {}
+        setUndoing(false);
+      };
+
+      const handleTouchStart = (e) => { startX.current = e.touches[0].clientX; };
+      const handleTouchMove = (e) => { currentX.current = e.touches[0].clientX; const diff = currentX.current - startX.current; if (cardRef.current) cardRef.current.style.transform = `translateX(${diff}px) rotate(${diff*0.05}deg)`; };
+      const handleTouchEnd = () => { const diff = currentX.current - startX.current; if (cardRef.current) cardRef.current.style.transform = ''; if (Math.abs(diff)>100) handleSwipe(diff>0?'right':'left'); startX.current=0; currentX.current=0; };
+
+      if (!loaded) return <div className="screen screen-with-nav"><div className="empty-state"><p>Cargando...</p></div></div>;
+      if (!currentProfile) return (
+        <div className="screen screen-with-nav"><div className="empty-state">
+          <div className="empty-icon">{'\uD83D\uDC94'}</div><h3 className="empty-title">No hay mas perfiles</h3><p className="empty-text">Vuelve mas tarde, quizas haya nuevos invitados</p>
+          {lastSwipe && <button className="btn btn-secondary btn-small" style={{marginTop:20,maxWidth:200}} onClick={handleUndo} disabled={undoing}>{'\u21A9\uFE0F'} Deshacer ultimo</button>}
+        </div></div>
+      );
+
+      const interestText = {guys:'Le gustan los chicos',girls:'Le gustan las chicas',both:'Le gustan ambos'};
+      return (
+        <div className="screen screen-with-nav">
+          <div className="swipe-container">
+            <div ref={cardRef} className={`profile-card ${swipeClass}`} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+              <div className="profile-image-container" onClick={e=>{const rect=e.currentTarget.getBoundingClientRect();const x=e.clientX-rect.left;x<rect.width/2?(photoIndex>0&&setPhotoIndex(p=>p-1)):(currentProfile.photos?.length>photoIndex+1&&setPhotoIndex(p=>p+1))}}>
+                {currentProfile.photos?.length > 0 ? <img src={currentProfile.photos[photoIndex]} alt="" className="profile-image" /> : <div className="profile-image-placeholder">:)</div>}
+                {currentProfile.photos?.length > 1 && <div className="profile-gallery-dots">{currentProfile.photos.map((_,i)=><div key={i} className={`gallery-dot ${i===photoIndex?'active':''}`} />)}</div>}
+              </div>
+              <div className="profile-info">
+                <h2 className="profile-name-age">{currentProfile.name} <span>{currentProfile.age}</span></h2>
+                <p className="profile-orientation">{interestText[currentProfile.orientation]}</p>
+              </div>
+            </div>
+          </div>
+          <div className="swipe-buttons">
+            <button className="swipe-btn swipe-btn-no" onClick={()=>handleSwipe('left')}>{'\u2715'}</button>
+            {lastSwipe && <button className="swipe-btn swipe-btn-undo" onClick={handleUndo} disabled={undoing}>{'\u21A9\uFE0F'}</button>}
+            <button className="swipe-btn swipe-btn-yes" onClick={()=>handleSwipe('right')}>{'\u2665'}</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ===================== MATCHES =====================
+    function MatchesScreen({ weddingCode, profile, onOpenChat }) {
+      const [matches, setMatches] = useState([]);
+      const [loaded, setLoaded] = useState(false);
+      useEffect(() => { api.get('/api/matches/' + weddingCode).then(({matches:m})=>{setMatches(m);setLoaded(true)}).catch(()=>setLoaded(true)); }, [weddingCode]);
+
+      if (!loaded) return <div className="screen screen-with-nav"><div className="empty-state"><p>Cargando...</p></div></div>;
+      if (matches.length === 0) return (
+        <div className="screen screen-with-nav">
+          <h2 className="card-title" style={{marginBottom:20}}>{'\u2728'} Tus Matches</h2>
+          <div className="empty-state"><div className="empty-icon">{'\uD83D\uDCAB'}</div><h3 className="empty-title">Aun no hay matches</h3><p className="empty-text">Sigue deslizando para encontrar a alguien especial!</p></div>
+        </div>
+      );
+
+      return (
+        <div className="screen screen-with-nav">
+          <h2 className="card-title" style={{marginBottom:20}}>{'\u2728'} Tus Matches ({matches.length})</h2>
+          <div className="matches-list">{matches.map(m => (
+            <div key={m.id} className="match-item" style={{cursor:'pointer'}} onClick={()=>onOpenChat(m)}>
+              {m.photos?.[0]?<img src={m.photos[0]} alt="" className="match-avatar" />:<div className="match-avatar-placeholder">:)</div>}
+              <div className="match-info"><h3>{m.name}, {m.age}</h3><p>{m.lastMessage ? m.lastMessage : 'Toca para chatear'}</p></div>
+              <span style={{fontSize:'1.2rem',color:'var(--primary)'}}>{'\uD83D\uDCAC'}</span>
+            </div>
+          ))}</div>
+        </div>
+      );
+    }
+
+    // ===================== CHAT =====================
+    function ChatScreen({ weddingCode, otherProfile, onBack }) {
+      const [messages, setMessages] = useState([]);
+      const [text, setText] = useState('');
+      const [sending, setSending] = useState(false);
+      const [myProfileId, setMyProfileId] = useState(null);
+      const messagesEnd = useRef(null);
+      const pollRef = useRef(null);
+
+      const loadMessages = async () => {
+        try {
+          const { messages: msgs, myProfileId: pid } = await api.get('/api/messages/' + weddingCode + '/' + otherProfile.id);
+          setMessages(msgs); setMyProfileId(pid);
+        } catch {}
+      };
+
+      useEffect(() => { loadMessages(); pollRef.current = setInterval(loadMessages, 3000); return () => clearInterval(pollRef.current); }, []);
+      useEffect(() => { messagesEnd.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+      const send = async () => {
+        if (!text.trim() || sending) return;
+        setSending(true);
+        try { await api.post('/api/messages', { wedding_code: weddingCode, to_profile_id: otherProfile.id, text: text.trim() }); setText(''); await loadMessages(); } catch {}
+        setSending(false);
+      };
+
+      return (
+        <div className="chat-container">
+          <div className="chat-header">
+            <button className="back-btn" style={{position:'static',transform:'none',background:'var(--secondary)',color:'var(--text)'}} onClick={onBack}>{'\u2190'}</button>
+            {otherProfile.photos?.[0]?<img src={otherProfile.photos[0]} alt="" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover'}} />:null}
+            <div><strong>{otherProfile.name}</strong></div>
+          </div>
+          <div className="chat-messages">
+            {messages.length===0 && <div style={{textAlign:'center',color:'var(--text-light)',paddingTop:40}}>
+              <p>Aun no hay mensajes</p><p style={{fontSize:'0.85rem'}}>Di hola! {'\uD83D\uDC4B'}</p>
+            </div>}
+            {messages.map(m => <div key={m.id} className={`chat-bubble ${m.mine ? 'mine' : 'theirs'}`}>{m.text}</div>)}
+            <div ref={messagesEnd} />
+          </div>
+          <div className="chat-input-area">
+            <input className="chat-input" placeholder="Escribe un mensaje..." value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send()}} />
+            <button className="chat-send" onClick={send} disabled={!text.trim()||sending}>{'\u27A4'}</button>
+          </div>
+        </div>
+      );
+    }
+
+    // ===================== PROFILE =====================
+    function ProfileScreen({ profile, onUpdate, onLogout, onBackToWeddings }) {
+      const [editing, setEditing] = useState(false);
+      const [name, setName] = useState(profile.name);
+      const [age, setAge] = useState(profile.age.toString());
+      const [gender, setGender] = useState(profile.gender);
+      const [orientation, setOrientation] = useState(profile.orientation);
+      const [photos, setPhotos] = useState(profile.photos || []);
+
+      const handleSave = async () => { await onUpdate({ name, age: parseInt(age), gender, orientation, photos }); setEditing(false); };
+
+      const genderLabel = {male:'Chico',female:'Chica'};
+      const orientLabel = {guys:'Chicos',girls:'Chicas',both:'Ambos'};
+
+      return (
+        <div className="screen screen-with-nav"><div className="card">
+          <h3 className="card-title">{'\uD83D\uDC64'} Mi Perfil</h3>
+          {editing ? <>
+            <div className="form-group"><label className="form-label">Nombre</label><input type="text" className="form-input" value={name} onChange={e=>setName(e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">Edad</label><input type="number" className="form-input" value={age} onChange={e=>setAge(e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">Soy</label>
+              <select className="form-input form-select" value={gender} onChange={e=>setGender(e.target.value)}><option value="male">Chico</option><option value="female">Chica</option></select></div>
+            <div className="form-group"><label className="form-label">Me gustan</label>
+              <select className="form-input form-select" value={orientation} onChange={e=>setOrientation(e.target.value)}><option value="guys">Chicos</option><option value="girls">Chicas</option><option value="both">Ambos</option></select></div>
+            <div className="form-group"><label className="form-label">Fotos</label><PhotoUploader photos={photos} setPhotos={setPhotos} /></div>
+            <button className="btn btn-primary" onClick={handleSave}>Guardar cambios</button>
+          </> : <>
+            <div style={{textAlign:'center',marginBottom:24}}>
+              {photos[0]?<img src={photos[0]} alt="" style={{width:120,height:120,borderRadius:'50%',objectFit:'cover',border:'4px solid var(--primary)'}} />
+                :<div style={{width:120,height:120,borderRadius:'50%',background:'var(--secondary)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'3rem',margin:'0 auto'}}>:)</div>}
+              <h2 style={{fontFamily:"'Playfair Display', serif",fontSize:'1.8rem',marginTop:16}}>{profile.name}, {profile.age}</h2>
+              <p style={{color:'var(--text-light)',marginTop:4}}>{genderLabel[profile.gender]} &middot; Me gustan: {orientLabel[profile.orientation]}</p>
+            </div>
+            <button className="btn btn-secondary" onClick={()=>setEditing(true)} style={{marginBottom:12}}>{'\u270F\uFE0F'} Editar perfil</button>
+            {onBackToWeddings && <button className="btn btn-outline" onClick={onBackToWeddings} style={{marginBottom:12}}>{'\uD83D\uDC92'} Mis bodas</button>}
+            <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesion</button>
+          </>}
+        </div></div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
