@@ -386,7 +386,7 @@ async function start() {
 
   saveDb();
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Wedding Match running on http://localhost:${PORT}`));
+  app.listen(PORT, () => console.log(`Wedding Match running on: ${PORT}`));
 }
 
 start().catch(err => { console.error('Error:', err); process.exit(1); });
