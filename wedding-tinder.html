@@ -867,7 +867,11 @@
       const [loaded, setLoaded] = useState(false);
       const [viewProfile, setViewProfile] = useState(null);
       const [viewPhotoIndex, setViewPhotoIndex] = useState(0);
+      const photoStartX = useRef(0);
       useEffect(() => { api.get('/api/matches/' + weddingCode).then(({matches:m})=>{setMatches(m);setLoaded(true)}).catch(()=>setLoaded(true)); }, [weddingCode]);
+
+      const prevPhoto = () => setViewPhotoIndex(i => i > 0 ? i - 1 : i);
+      const nextPhoto = (max) => setViewPhotoIndex(i => i < max - 1 ? i + 1 : i);
 
       const interestText = {guys:'Le gustan los chicos',girls:'Le gustan las chicas',both:'Le gustan ambos'};
       const genderLabel = {male:'Chico',female:'Chica'};
@@ -879,7 +883,27 @@
           <div className="card" style={{textAlign:'center'}}>
             <div style={{position:'relative',marginBottom:16}}>
               {viewProfile.photos?.length > 0 ? <>
-                <img src={viewProfile.photos[viewPhotoIndex]} alt="" style={{width:'100%',maxHeight:350,objectFit:'cover',borderRadius:16}} />
+                <div
+                  style={{position:'relative',borderRadius:16,overflow:'hidden',cursor:viewProfile.photos.length>1?'pointer':'default',userSelect:'none'}}
+                  onTouchStart={e=>{photoStartX.current=e.touches[0].clientX}}
+                  onTouchEnd={e=>{
+                    if(viewProfile.photos.length<=1)return;
+                    const diff=e.changedTouches[0].clientX-photoStartX.current;
+                    if(Math.abs(diff)>30){
+                      if(diff<0)nextPhoto(viewProfile.photos.length);
+                      else prevPhoto();
+                    }
+                    photoStartX.current=0;
+                  }}
+                  onClick={e=>{
+                    if(viewProfile.photos.length<=1)return;
+                    const rect=e.currentTarget.getBoundingClientRect();
+                    if(e.clientX-rect.left<rect.width/2)prevPhoto();
+                    else nextPhoto(viewProfile.photos.length);
+                  }}
+                >
+                  <img src={viewProfile.photos[viewPhotoIndex]} alt="" draggable={false} style={{width:'100%',maxHeight:350,objectFit:'cover',display:'block',pointerEvents:'none'}} />
+                </div>
                 {viewProfile.photos.length > 1 && <div style={{display:'flex',justifyContent:'center',gap:6,marginTop:8}}>
                   {viewProfile.photos.map((_,i) => <div key={i} onClick={()=>setViewPhotoIndex(i)} style={{width:8,height:8,borderRadius:'50%',background:i===viewPhotoIndex?'var(--primary)':'var(--accent)',cursor:'pointer'}} />)}
                 </div>}
