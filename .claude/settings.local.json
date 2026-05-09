@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(npm start *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(awk 'NR>=730 && NR<=742' /home/gxnzalx55/WeddingDates/wedding-tinder.html)",
+      "Bash(awk 'NR==736' /home/gxnzalx55/WeddingDates/wedding-tinder.html)",
+      "Bash(node --check /home/gxnzalx55/WeddingDates/server.js)"
     ]
   }
 }

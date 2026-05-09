@@ -135,6 +135,22 @@ app.put('/api/weddings/mine', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+app.delete('/api/weddings/mine', auth, (req, res) => {
+  if (req.user.role !== 'couple') return res.status(403).json({ error: 'Solo novios' });
+  const wedding = getCoupleWedding(req.user.id);
+  if (!wedding) return res.status(404).json({ error: 'Boda no encontrada' });
+  const profileIds = all('SELECT id FROM profiles WHERE wedding_id = ?', [wedding.id]).map(p => p.id);
+  run('DELETE FROM messages WHERE wedding_id = ?', [wedding.id]);
+  run('DELETE FROM matches WHERE wedding_id = ?', [wedding.id]);
+  run('DELETE FROM likes WHERE wedding_id = ?', [wedding.id]);
+  run('DELETE FROM passes WHERE wedding_id = ?', [wedding.id]);
+  profileIds.forEach(pid => run('DELETE FROM photos WHERE profile_id = ?', [pid]));
+  run('DELETE FROM profiles WHERE wedding_id = ?', [wedding.id]);
+  run('DELETE FROM weddings WHERE id = ?', [wedding.id]);
+  saveDb();
+  res.json({ ok: true });
+});
+
 app.get('/api/weddings/join/:code', auth, (req, res) => {
   const wedding = get('SELECT id, code, names, wedding_date, venue FROM weddings WHERE code = ?', [req.params.code]);
   if (!wedding) return res.status(404).json({ error: 'Boda no encontrada' });

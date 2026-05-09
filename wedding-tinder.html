@@ -302,6 +302,11 @@
         setScreen('couplesDashboard');
       };
 
+      const handleWeddingDeleted = () => {
+        setWedding(null); setProfile(null); setWeddingCode(''); localStorage.removeItem('weddingCode');
+        setScreen('createWedding');
+      };
+
       const handleSelectGuestWedding = (gw) => {
         setWedding(gw.wedding); setProfile(gw.profile); setWeddingCode(gw.wedding.code);
         localStorage.setItem('weddingCode', gw.wedding.code);
@@ -354,7 +359,7 @@
           {screen === 'auth' && <AuthScreen onLogin={handleLogin} />}
           {screen === 'createWedding' && <CreateWeddingScreen onSubmit={async (d) => { const { wedding: w } = await api.post('/api/weddings', d); setWedding(w); setScreen('share'); }} />}
           {screen === 'share' && wedding && <ShareScreen wedding={wedding} onContinue={goToDashboard} showToast={showToast} />}
-          {screen === 'couplesDashboard' && wedding && <CouplesDashboard wedding={wedding} onLogout={handleLogout} onRefresh={goToDashboard} showToast={showToast} />}
+          {screen === 'couplesDashboard' && wedding && <CouplesDashboard wedding={wedding} onLogout={handleLogout} onRefresh={goToDashboard} onWeddingDeleted={handleWeddingDeleted} showToast={showToast} />}
           {screen === 'myWeddings' && <MyWeddingsScreen guestWeddings={guestWeddings} onSelect={handleSelectGuestWedding} onJoinNew={() => setScreen('enterCode')} onLogout={handleLogout} user={user} />}
           {screen === 'enterCode' && <EnterCodeScreen onSubmit={handleJoinWedding} showToast={showToast} user={user} />}
           {screen === 'welcomeWedding' && wedding && <WelcomeWeddingScreen wedding={wedding} onContinue={() => setScreen('createProfile')} />}
@@ -606,7 +611,7 @@
     }
 
     // ===================== COUPLES DASHBOARD =====================
-    function CouplesDashboard({ wedding, onLogout, onRefresh, showToast }) {
+    function CouplesDashboard({ wedding, onLogout, onRefresh, onWeddingDeleted, showToast }) {
       const [tab, setTab] = useState('overview');
       const [profiles, setProfiles] = useState(wedding.profiles || []);
       const [pending, setPending] = useState(wedding.pendingProfiles || []);
@@ -620,6 +625,9 @@
       const [editDate, setEditDate] = useState(wedding.wedding_date || '');
       const [editVenue, setEditVenue] = useState(wedding.venue || '');
       const [requireApproval, setRequireApproval] = useState(wedding.require_approval !== undefined ? !!wedding.require_approval : true);
+      const [showDeleteWedding, setShowDeleteWedding] = useState(false);
+      const [deleteConfirmText, setDeleteConfirmText] = useState('');
+      const [deletingWedding, setDeletingWedding] = useState(false);
       const url = window.location.origin + window.location.pathname + '?w=' + wedding.code;
 
       useEffect(() => {
@@ -643,6 +651,13 @@
       const saveInfo = async () => {
         await api.put('/api/weddings/mine', { names: editNames, wedding_date: editDate, venue: editVenue, require_approval: requireApproval });
         setEditingInfo(false); showToast('Datos guardados'); refresh();
+      };
+
+      const deleteWedding = async () => {
+        if (deletingWedding) return;
+        setDeletingWedding(true);
+        try { await api.del('/api/weddings/mine'); showToast('Boda eliminada'); onWeddingDeleted && onWeddingDeleted(); }
+        catch (e) { showToast(e.message || 'Error al eliminar'); setDeletingWedding(false); }
       };
 
       const maxLikes = Math.max(1, ...(stats.likesPerProfile||[]).map(p=>p.likes_received));
@@ -721,6 +736,21 @@
             <div style={{display:'flex',gap:12,flexDirection:'column',alignItems:'center'}}>
               <button className="btn btn-secondary btn-small" onClick={refresh} disabled={refreshing}>{refreshing ? '...' : '\uD83D\uDD04 Actualizar datos'}</button>
               <button className="btn btn-outline btn-small" onClick={onLogout}>{'\uD83D\uDEAA'} Cerrar sesión</button>
+            </div>
+
+            <div className="card" style={{marginTop:16,border:'2px solid var(--danger)'}}>
+              <h3 className="card-title" style={{color:'var(--danger)'}}>{'⚠️'} Zona de peligro</h3>
+              {!showDeleteWedding ? <>
+                <p style={{color:'var(--text-light)',fontSize:'0.85rem',marginBottom:12}}>Eliminar la boda borrará todos los invitados, fotos, likes, matches y mensajes. Esta acción no se puede deshacer.</p>
+                <button style={{width:'100%',padding:'10px',border:'2px solid var(--danger)',borderRadius:12,background:'white',color:'var(--danger)',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:'pointer'}} onClick={()=>{setShowDeleteWedding(true);setDeleteConfirmText('')}}>Eliminar boda</button>
+              </> : <>
+                <p style={{fontSize:'0.85rem',marginBottom:8}}>Para confirmar, escribe el código de la boda <strong>{wedding.code}</strong>:</p>
+                <input type="text" className="form-input" value={deleteConfirmText} onChange={e=>setDeleteConfirmText(e.target.value)} placeholder={wedding.code} style={{marginBottom:12}} />
+                <div style={{display:'flex',gap:8}}>
+                  <button style={{flex:1,padding:'10px',border:'none',borderRadius:12,background:'var(--danger)',color:'white',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:deleteConfirmText===wedding.code&&!deletingWedding?'pointer':'not-allowed',opacity:deleteConfirmText===wedding.code&&!deletingWedding?1:0.5}} disabled={deleteConfirmText!==wedding.code||deletingWedding} onClick={deleteWedding}>{deletingWedding?'Eliminando...':'Si, eliminar boda'}</button>
+                  <button style={{flex:1,padding:'10px',border:'2px solid var(--accent)',borderRadius:12,background:'white',fontFamily:'Quicksand',fontWeight:600,fontSize:'0.85rem',cursor:'pointer'}} onClick={()=>{setShowDeleteWedding(false);setDeleteConfirmText('')}}>Cancelar</button>
+                </div>
+              </>}
             </div>
           </>}
 
